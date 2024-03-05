@@ -1,24 +1,99 @@
 version: "3.9"
-
 services:
-  traefik:
-    image: "traefik:v2.4"
-    container_name: "traefik"
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`traefik.localhost`)"
-      - "traefik.http.routers.api.service=api@internal"
-      - "traefik.http.routers.api.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$7z3z7z3z$$z
+    ############################################
+    ### traefik service ########################
+    ############################################
+    traefik:
+        container_name: traefik
+        image: traefik:latest
+        pull_policy: always
+        ports:
+            - 80:80
+            - 443:443
+            - 8080:8080
+        command:
+            # - --log.level=DEBUG
+            - --api.insecure=true
+            - --providers.docker=true
+            - --providers.docker.exposedbydefault=false
+            - --entrypoints.web.address=:80
+            - --entrypoints.web.http.redirections.entryPoint.to=websecure
+            - --entrypoints.web.http.redirections.entryPoint.scheme=https
+            - --entrypoints.web.http.redirections.entrypoint.permanent=true
+            - --entrypoints.websecure.address=:443
+            - --entrypoints.websecure.http.tls=true
+            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.tlschallenge=true
+            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.email=${LETSENCRYPT_EMAIL:-test@example.com}
+            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json
+        volumes:
+            - ./letsencrypt:/letsencrypt
+            - ${DOCKER_SOCK_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
+        labels:
+            traefik.enable: true 
 
+            # Dashboard
+            traefik.http.routers.dashboard.rule: Host(`traefik.${BASE_DOMAIN:-localhost}`)
+            traefik.http.routers.dashboard.entrypoints: websecure
+            traefik.http.routers.dashboard.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            traefik.http.routers.dashboard.service: api@internal
+            traefik.http.routers.dashboard.middlewares: auth
+
+            # Default test/test
+            traefik.http.middlewares.auth.basicauth.users: ${DASHBOARD_USER:-test}:${DASHBOARD_PASS:-$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/}
+          
+            # low priority rule for otherwise unmatched www. host prefixes
+            traefik.http.routers.unmatchedwww.rule: HostRegexp(`{name:^www\..*}`) 
+            traefik.http.routers.unmatchedwww.service: noop@internal
+            traefik.http.routers.unmatchedwww.priority: 2
+
+            # lowest priority catchall rule, will add/replace www. host portion
+            traefik.http.routers.matchlast.rule: PathPrefix(`/`)
+            traefik.http.routers.matchlast.priority: 1
+            traefik.http.routers.matchlast.middlewares: addwww
+            traefik.http.middlewares.addwww.redirectregex.regex: ^https://(?:www\.)?(.*)
+            traefik.http.middlewares.addwww.redirectregex.replacement: https://www.${BASE_DOMAIN:-localhost}
+
+    ############################################
+    ### traefik whoami service #################
+    ############################################
+    whoami:
+        image: traefik/whoami
+        container_name: whoami
+        labels:
+            traefik.enable: true
+            traefik.http.routers.whoami.rule: Host(`whoami.${BASE_DOMAIN:-localhost}`)
+            traefik.http.routers.whoami.entrypoints: websecure
+            traefik.http.routers.whoami.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            traefik.http.routers.whoami.middlewares: auth
+
+    ############################################
+    ### MySQL service ##########################
+    ############################################
+    mysql:
+        image: mysql:5.7
+        container_name: wordpress_mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_PASSWORD:-password}
+            MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-wordpress}
+            MYSQL_USER: ${WORDPRESS_DB_USER:-root}
+            MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-password}
+        labels:
+            traefik.enable: false
+
+    ############################################
+    ### WordPress service ######################
+    ############################################
+    wordpress:
+        image: wordpress:latest
+        container_name: wordpress
+        environment:
+            WORDPRESS_DB_HOST: db
+            WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-root}
+            WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-password}
+            WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
+        labels:
+            traefik.enable: true
+            traefik.http.routers.wordpress.rule: Host(`wordpress.${BASE_DOMAIN:-localhost}`)
+            traefik.http.routers.wordpress.entrypoints: websecure
+            traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            traefik.http.routers.wordpress.middlewares: auth
