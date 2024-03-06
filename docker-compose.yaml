@@ -96,4 +96,3 @@ services:
             traefik.http.routers.wordpress.rule: Host(`wordpress.${BASE_DOMAIN:-localhost}`)
             traefik.http.routers.wordpress.entrypoints: websecure
             traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
-            traefik.http.routers.wordpress.middlewares: auth
