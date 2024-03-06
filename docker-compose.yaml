@@ -26,7 +26,7 @@ services:
             - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.email=${LETSENCRYPT_EMAIL:-test@example.com}
             - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json
         volumes:
-            - ./letsencrypt:/letsencrypt
+           ## - ./letsencrypt:/letsencrypt
             - ${DOCKER_SOCK_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
         labels:
             traefik.enable: true 
@@ -41,18 +41,6 @@ services:
             # Default test/test
             traefik.http.middlewares.auth.basicauth.users: ${DASHBOARD_USER:-test}:${DASHBOARD_PASS:-$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/}
           
-            # low priority rule for otherwise unmatched www. host prefixes
-            traefik.http.routers.unmatchedwww.rule: HostRegexp(`{name:^www\..*}`) 
-            traefik.http.routers.unmatchedwww.service: noop@internal
-            traefik.http.routers.unmatchedwww.priority: 2
-
-            # lowest priority catchall rule, will add/replace www. host portion
-            traefik.http.routers.matchlast.rule: PathPrefix(`/`)
-            traefik.http.routers.matchlast.priority: 1
-            traefik.http.routers.matchlast.middlewares: addwww
-            traefik.http.middlewares.addwww.redirectregex.regex: ^https://(?:www\.)?(.*)
-            traefik.http.middlewares.addwww.redirectregex.replacement: https://www.${BASE_DOMAIN:-localhost}
-
     ############################################
     ### traefik whoami service #################
     ############################################
@@ -93,6 +81,6 @@ services:
             WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
         labels:
             traefik.enable: true
-            traefik.http.routers.wordpress.rule: Host(`wordpress.${BASE_DOMAIN:-localhost}`)
+            traefik.http.routers.wordpress.rule: Host(`${BASE_DOMAIN:-localhost}`)
             traefik.http.routers.wordpress.entrypoints: websecure
             traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
