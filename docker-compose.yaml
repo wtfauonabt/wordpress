@@ -62,6 +62,21 @@ services:
         command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
 
     ############################################
+    ### Nginx Proxy Manager ####################
+    ############################################
+    nginx-proxy-manager:
+        image: jlesage/nginx-proxy-manager:latest
+        container_name: nginx-proxy-manager
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./mount/nginx-proxy-manager:/config
+            - /etc/letsencrypt:/etc/letsencrypt
+        environment:
+            - TZ=${TZ:-Asia/Hong_Kong}
+
+    ############################################
     ### MySQL service ##########################
     ############################################
     mysql:
@@ -83,8 +98,6 @@ services:
     wordpress:
         image: wordpress:latest
         container_name: wordpress
-        ports:
-            - 80
         depends_on:
             - mysql
         volumes:
