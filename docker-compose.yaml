@@ -59,7 +59,7 @@ services:
     ############################################
     cloudflare:
         image: cloudflare/cloudflared:latest
-        command: tunnel --no-autoupdate run --token
+        command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
 
     ############################################
     ### MySQL service ##########################
@@ -83,7 +83,7 @@ services:
     wordpress:
         image: wordpress:latest
         container_name: wordpress
-        port:
+        ports:
             - 80
         depends_on:
             - mysql
