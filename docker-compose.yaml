@@ -3,56 +3,63 @@ services:
     ############################################
     ### traefik service ########################
     ############################################
-    traefik:
-        container_name: traefik
-        image: traefik:latest
-        pull_policy: always
-        ports:
-            - 80:80
-            - 443:443
-            - 8080:8080
-        command:
-            # - --log.level=DEBUG
-            - --api.insecure=true
-            - --providers.docker=true
-            - --providers.docker.exposedbydefault=false
-            - --entrypoints.web.address=:80
-            - --entrypoints.web.http.redirections.entryPoint.to=websecure
-            - --entrypoints.web.http.redirections.entryPoint.scheme=https
-            - --entrypoints.web.http.redirections.entrypoint.permanent=true
-            - --entrypoints.websecure.address=:443
-            - --entrypoints.websecure.http.tls=true
-            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.tlschallenge=true
-            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.email=${LETSENCRYPT_EMAIL:-test@example.com}
-            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json
-        volumes:
-            - ./letsencrypt:/letsencrypt
-            - ${DOCKER_SOCK_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
-        labels:
-            traefik.enable: true 
+    #traefik:
+        #container_name: traefik
+        #image: traefik:latest
+        #pull_policy: always
+        #ports:
+            #- 80:80
+            #- 443:443
+            #- 8080:8080
+        #command:
+            ## - --log.level=DEBUG
+            #- --api.insecure=true
+            #- --providers.docker=true
+            #- --providers.docker.exposedbydefault=false
+            #- --entrypoints.web.address=:80
+            #- --entrypoints.web.http.redirections.entryPoint.to=websecure
+            #- --entrypoints.web.http.redirections.entryPoint.scheme=https
+            #- --entrypoints.web.http.redirections.entrypoint.permanent=true
+            #- --entrypoints.websecure.address=:443
+            #- --entrypoints.websecure.http.tls=true
+            #- --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.tlschallenge=true
+            #- --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.email=${LETSENCRYPT_EMAIL:-test@example.com}
+            #- --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json
+        #volumes:
+            #- ./letsencrypt:/letsencrypt
+            #- ${DOCKER_SOCK_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
+        #labels:
+            #traefik.enable: true 
 
-            # Dashboard
-            traefik.http.routers.dashboard.rule: Host(`traefik.${BASE_DOMAIN:-localhost}`)
-            traefik.http.routers.dashboard.entrypoints: websecure
-            traefik.http.routers.dashboard.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
-            traefik.http.routers.dashboard.service: api@internal
-            traefik.http.routers.dashboard.middlewares: auth
+            ## Dashboard
+            #traefik.http.routers.dashboard.rule: Host(`traefik.${BASE_DOMAIN:-localhost}`)
+            #traefik.http.routers.dashboard.entrypoints: websecure
+            #traefik.http.routers.dashboard.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            #traefik.http.routers.dashboard.service: api@internal
+            #traefik.http.routers.dashboard.middlewares: auth
 
-            # Default test/test
-            traefik.http.middlewares.auth.basicauth.users: ${DASHBOARD_USER:-test}:${DASHBOARD_PASS:-$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/}
+            ## Default test/test
+            #traefik.http.middlewares.auth.basicauth.users: ${DASHBOARD_USER:-test}:${DASHBOARD_PASS:-$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/}
           
     ############################################
     ### traefik whoami service #################
     ############################################
-    whoami:
-        image: traefik/whoami
-        container_name: whoami
-        labels:
-            traefik.enable: true
-            traefik.http.routers.whoami.rule: Host(`whoami.${BASE_DOMAIN:-localhost}`)
-            traefik.http.routers.whoami.entrypoints: websecure
-            traefik.http.routers.whoami.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
-            traefik.http.routers.whoami.middlewares: auth
+    #whoami:
+        #image: traefik/whoami
+        #container_name: whoami
+        #labels:
+            #traefik.enable: true
+            #traefik.http.routers.whoami.rule: Host(`whoami.${BASE_DOMAIN:-localhost}`)
+            #traefik.http.routers.whoami.entrypoints: websecure
+            #traefik.http.routers.whoami.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            #traefik.http.routers.whoami.middlewares: auth
+
+    ############################################
+    ### Cloudflare Tunnel ######################
+    ############################################
+    cloudflare:
+        image: cloudflare/cloudflared:latest
+        command: tunnel --no-autoupdate run --token
 
     ############################################
     ### MySQL service ##########################
@@ -67,8 +74,8 @@ services:
             MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-wordpress}
             MYSQL_USER: ${WORDPRESS_DB_USER:-root}
             MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-password}
-        labels:
-            traefik.enable: false
+        #labels:
+            #traefik.enable: false
 
     ############################################
     ### WordPress service ######################
@@ -76,6 +83,8 @@ services:
     wordpress:
         image: wordpress:latest
         container_name: wordpress
+        port:
+            - 80
         depends_on:
             - mysql
         volumes:
@@ -85,8 +94,8 @@ services:
             WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-root}
             WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-password}
             WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-wordpress}
-        labels:
-            traefik.enable: true
-            traefik.http.routers.wordpress.rule: Host(`${BASE_DOMAIN:-localhost}`)
-            traefik.http.routers.wordpress.entrypoints: websecure
-            traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+        #labels:
+            #traefik.enable: true
+            #traefik.http.routers.wordpress.rule: Host(`${BASE_DOMAIN:-localhost}`)
+            #traefik.http.routers.wordpress.entrypoints: websecure
+            #traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
