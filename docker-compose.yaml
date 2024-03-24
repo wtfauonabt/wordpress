@@ -12,19 +12,19 @@ services:
             - 443:443
             - 8080:8080
         command:
-            - --log.level=DEBUG
-            - --api.insecure=false
+            # - --log.level=DEBUG
+            - --api.insecure=true
             - --providers.docker=true
             - --providers.docker.exposedbydefault=false
             - --entrypoints.web.address=:80
-            #- --entrypoints.web.http.redirections.entryPoint.to=websecure
-            #- --entrypoints.web.http.redirections.entryPoint.scheme=https
-            #- --entrypoints.web.http.redirections.entrypoint.permanent=true
-            #- --entrypoints.websecure.address=:443
-            #- --entrypoints.websecure.http.tls=true
-            #- --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.tlschallenge=true
-            #- --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.email=${LETSENCRYPT_EMAIL:-test@example.com}
-            #- --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json
+            - --entrypoints.web.http.redirections.entryPoint.to=websecure
+            - --entrypoints.web.http.redirections.entryPoint.scheme=https
+            - --entrypoints.web.http.redirections.entrypoint.permanent=true
+            - --entrypoints.websecure.address=:443
+            - --entrypoints.websecure.http.tls=true
+            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.tlschallenge=true
+            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.email=${LETSENCRYPT_EMAIL:-test@example.com}
+            - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json
         volumes:
            ## - ./letsencrypt:/letsencrypt
             - ${DOCKER_SOCK_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
@@ -33,9 +33,8 @@ services:
 
             # Dashboard
             traefik.http.routers.dashboard.rule: Host(`traefik.${BASE_DOMAIN:-localhost}`)
-            traefik.http.routers.dashboard.entrypoints: web
-            #traefik.http.routers.dashboard.entrypoints: websecure
-            #traefik.http.routers.dashboard.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            traefik.http.routers.dashboard.entrypoints: websecure
+            traefik.http.routers.dashboard.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
             traefik.http.routers.dashboard.service: api@internal
             traefik.http.routers.dashboard.middlewares: auth
 
@@ -51,9 +50,8 @@ services:
         labels:
             traefik.enable: true
             traefik.http.routers.whoami.rule: Host(`whoami.${BASE_DOMAIN:-localhost}`)
-            traefik.http.routers.whoami.entrypoints: web
-            #traefik.http.routers.whoami.entrypoints: websecure
-            #traefik.http.routers.whoami.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            traefik.http.routers.whoami.entrypoints: websecure
+            traefik.http.routers.whoami.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
             traefik.http.routers.whoami.middlewares: auth
 
     ############################################
@@ -90,6 +88,5 @@ services:
         labels:
             traefik.enable: true
             traefik.http.routers.wordpress.rule: Host(`${BASE_DOMAIN:-localhost}`)
-            traefik.http.routers.wordpress.entrypoints: web
-            #traefik.http.routers.wordpress.entrypoints: websecure
-            #traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+            traefik.http.routers.wordpress.entrypoints: websecure
+            traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
