@@ -26,7 +26,7 @@ services:
             - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.email=${LETSENCRYPT_EMAIL:-test@example.com}
             - --certificatesresolvers.${DEFAULT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json
         volumes:
-           ## - ./letsencrypt:/letsencrypt
+            - ./letsencrypt:/letsencrypt
             - ${DOCKER_SOCK_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
         labels:
             traefik.enable: true 
