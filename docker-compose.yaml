@@ -68,10 +68,13 @@ services:
         image: jlesage/nginx-proxy-manager:latest
         container_name: nginx-proxy-manager
         ports:
+            - 81:81
             - 80:80
             - 443:443
+        restart: unless-stopped
         volumes:
-            - ./mount/nginx-proxy-manager:/config
+            - ./mount/nginx-proxy-manager/config:/config
+            - ./mount/nginx-proxy-manager/data:/data
             - /etc/letsencrypt:/etc/letsencrypt
         environment:
             - TZ=${TZ:-Asia/Hong_Kong}
@@ -84,6 +87,7 @@ services:
         container_name: wordpress_mysql
         volumes:
             - ./mount/mysql:/var/lib/mysql
+        restart: unless-stopped
         environment:
             MYSQL_ROOT_PASSWORD: ${WORDPRESS_DB_PASSWORD:-password}
             MYSQL_DATABASE: ${WORDPRESS_DB_NAME:-wordpress}
@@ -102,6 +106,7 @@ services:
             - mysql
         volumes:
             - ./mount/wordpress:/var/www/html
+        restart: unless-stopped
         environment:
             WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST:-mysql}
             WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-root}
