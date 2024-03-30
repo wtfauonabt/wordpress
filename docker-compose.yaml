@@ -65,7 +65,7 @@ services:
     ### Nginx Proxy Manager ####################
     ############################################
     nginx-proxy-manager:
-        image: jlesage/nginx-proxy-manager:latest
+        image: jc12/nginx-proxy-manager:latest
         container_name: nginx-proxy-manager
         ports:
             - 81:81
@@ -127,6 +127,6 @@ services:
 
 networks:
     koalafood:
-        driver: bridge
+        driver: hosts 
 
 
