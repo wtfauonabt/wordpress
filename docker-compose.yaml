@@ -125,3 +125,9 @@ services:
         networks:
             - koalafood
 
+
+networks:
+    koalafood:
+        driver: bridge
+
+
