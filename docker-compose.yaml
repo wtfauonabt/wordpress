@@ -73,7 +73,6 @@ services:
             - 443:443
         restart: unless-stopped
         volumes:
-            - ./mount/nginx-proxy-manager/config:/config
             - ./mount/nginx-proxy-manager/data:/data
             - /etc/letsencrypt:/etc/letsencrypt
         environment:
