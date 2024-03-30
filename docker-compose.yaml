@@ -57,9 +57,9 @@ services:
     ############################################
     ### Cloudflare Tunnel ######################
     ############################################
-    cloudflare:
-        image: cloudflare/cloudflared:latest
-        command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+    #cloudflare:
+        #image: cloudflare/cloudflared:latest
+        #command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
 
     ############################################
     ### Nginx Proxy Manager ####################
@@ -78,6 +78,8 @@ services:
             - /etc/letsencrypt:/etc/letsencrypt
         environment:
             - TZ=${TZ:-Asia/Hong_Kong}
+        networks:
+            - koalafood
 
     ############################################
     ### MySQL service ##########################
@@ -95,6 +97,9 @@ services:
             MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-password}
         #labels:
             #traefik.enable: false
+        networks:
+            - koalafood
+
 
     ############################################
     ### WordPress service ######################
@@ -117,3 +122,6 @@ services:
             #traefik.http.routers.wordpress.rule: Host(`${BASE_DOMAIN:-localhost}`)
             #traefik.http.routers.wordpress.entrypoints: websecure
             #traefik.http.routers.wordpress.tls.certresolver: ${DEFAULT_RESOLVER:-myresolver}
+        networks:
+            - koalafood
+
